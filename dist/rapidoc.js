@@ -28291,6 +28291,7 @@ function callbackTemplate(callbacks) {
                       fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
                       use-summary-to-list-example = "${this.useSummaryToListExamples}"
                       allow-try = "false"
+                      hide-try-metadata="${this.hideTryMetadata}"
                       render-style="${this.renderStyle}" 
                       schema-style = "${this.schemaStyle}"
                       request-body-render-style="${this.requestBodyRenderStyle}"
@@ -30254,6 +30255,10 @@ class ApiRequest extends lit_element_s {
         type: String,
         attribute: 'allow-try'
       },
+      hideTryMetadata: {
+        type: Boolean,
+        attribute: 'hide-try-metadata'
+      },
       renderStyle: {
         type: String,
         attribute: 'render-style'
@@ -31210,16 +31215,18 @@ class ApiRequest extends lit_element_s {
     return $`
     <div style="display:flex; align-items:flex-end; margin:16px 0; font-size:var(--font-size-small);">
       <div class="hide-in-small-screen" style="flex-direction:column; margin:0; width:calc(100% - 60px);">
-        <div style="display:flex; flex-direction:row; align-items:center; overflow:hidden;"> 
-          ${selectedServerHtml}
-        </div>
-        <div style="display:flex;">
-          <div style="font-weight:bold; padding-right:5px;">Authentication</div>
-          ${((_this$security = this.security) === null || _this$security === void 0 ? void 0 : _this$security.length) > 0 ? $`
-              ${this.api_keys.length > 0 ? $`<div style="color:var(--blue); overflow:hidden;"> 
-                    ${this.api_keys.length === 1 ? `${(_this$api_keys$ = this.api_keys[0]) === null || _this$api_keys$ === void 0 ? void 0 : _this$api_keys$.typeDisplay} in ${this.api_keys[0].in}` : `${this.api_keys.length} API keys applied`} 
-                  </div>` : $`<div class="gray-text">Required  <span style="color:var(--red)">(None Applied)</span>`}` : $`<span class="gray-text"> Not Required </span>`}
-        </div>
+        ${this.hideTryMetadata ? null : $`
+              <div style="display:flex; flex-direction:row; align-items:center; overflow:hidden;"> 
+                ${selectedServerHtml}
+              </div>
+              <div style="display:flex;">
+                <div style="font-weight:bold; padding-right:5px;">Authentication</div>
+                ${((_this$security = this.security) === null || _this$security === void 0 ? void 0 : _this$security.length) > 0 ? $`
+                    ${this.api_keys.length > 0 ? $`<div style="color:var(--blue); overflow:hidden;"> 
+                          ${this.api_keys.length === 1 ? `${(_this$api_keys$ = this.api_keys[0]) === null || _this$api_keys$ === void 0 ? void 0 : _this$api_keys$.typeDisplay} in ${this.api_keys[0].in}` : `${this.api_keys.length} API keys applied`} 
+                        </div>` : $`<div class="gray-text">Required  <span style="color:var(--red)">(None Applied)</span>`}` : $`<span class="gray-text"> Not Required </span>`}
+              </div>
+            `}
       </div>
       ${this.parameters.length > 0 || this.request_body ? $`
             <button class="m-btn thin-border" part="btn btn-outline btn-fill" style="margin-right:5px;" @click="${this.onFillRequestData}" title="Fills with example data (if provided)">
@@ -32525,6 +32532,7 @@ function expandedEndpointBodyTemplate(path, tagName = '') {
         fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
         use-summary-to-list-example = "${this.useSummaryToListExamples}"
         allow-try = "${this.allowTry}"
+        hide-try-metadata="${this.hideTryMetadata}"
         accept = "${accept}"
         render-style="${this.renderStyle}" 
         schema-style = "${this.schemaStyle}"
@@ -33298,6 +33306,7 @@ function endpointBodyTemplate(path) {
           fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
           use-summary-to-list-example = "${this.useSummaryToListExamples}"
           allow-try = "${this.allowTry}"
+          hide-try-metadata="${this.hideTryMetadata}"
           accept = "${accept}"
           render-style="${this.renderStyle}" 
           schema-style = "${this.schemaStyle}" 
@@ -34336,6 +34345,10 @@ class RapiDoc extends lit_element_s {
       allowTry: {
         type: String,
         attribute: 'allow-try'
+      },
+      hideTryMetadata: {
+        type: Boolean,
+        attribute: 'hide-try-metadata'
       },
       allowSpecUrlLoad: {
         type: String,
@@ -42268,7 +42281,7 @@ Prism.languages.js = Prism.languages.javascript;
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("8fc664197c9fbdc8620f")
+/******/ 		__webpack_require__.h = () => ("2b9fb9ed5347b2fffa75")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
