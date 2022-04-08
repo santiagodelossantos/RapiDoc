@@ -3740,7 +3740,8 @@ pre[class*="language-"] {
   height:16px;
   text-align: center;
   display: inline-block;
-  transform: rotate(270deg);
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease-out 0s;
 }
 .nav-bar.focused .nav-bar-tag-and-paths.expanded .nav-bar-tag-icon::after {
   content: '⌵';
@@ -3748,6 +3749,7 @@ pre[class*="language-"] {
   height:16px;
   text-align: center;
   display: inline-block;
+  transition: transform 0.2s ease-out 0s;
 }
 .nav-scroll::-webkit-scrollbar {
   width: var(--scroll-bar-width, 8px);
@@ -28287,9 +28289,11 @@ function callbackTemplate(callbacks) {
                       .parameters = "${((_method$ = method[1]) === null || _method$ === void 0 ? void 0 : _method$.parameters) || ''}" 
                       .request_body = "${((_method$2 = method[1]) === null || _method$2 === void 0 ? void 0 : _method$2.requestBody) || ''}"
                       fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
+                      use-summary-to-list-example = "${this.useSummaryToListExamples}"
                       allow-try = "false"
                       render-style="${this.renderStyle}" 
                       schema-style = "${this.schemaStyle}"
+                      request-body-render-style="${this.requestBodyRenderStyle}"
                       active-schema-tab = "${this.defaultSchemaTab}"
                       schema-expand-level = "${this.schemaExpandLevel}"
                       schema-description-expanded = "${this.schemaDescriptionExpanded}"
@@ -30171,6 +30175,7 @@ class ApiRequest extends lit_element_s {
     this.curlSyntax = '';
     this.activeResponseTab = 'response'; // allowed values: response, headers, curl
 
+    this.requestBodyRenderStyle = 'default';
     this.selectedRequestBodyType = '';
     this.selectedRequestBodyExample = '';
     this.activeParameterSchemaTabs = {};
@@ -30212,6 +30217,11 @@ class ApiRequest extends lit_element_s {
       callback: {
         type: String
       },
+      requestBodyRenderStyle: {
+        type: String,
+        attribute: 'request-body-render-style'
+      },
+      // 'splitted' | 'default'
       responseMessage: {
         type: String,
         attribute: false
@@ -30235,6 +30245,10 @@ class ApiRequest extends lit_element_s {
       fillRequestFieldsWithExample: {
         type: String,
         attribute: 'fill-request-fields-with-example'
+      },
+      useSummaryToListExamples: {
+        type: String,
+        attribute: 'use-summary-to-list-example'
       },
       allowTry: {
         type: String,
@@ -30382,6 +30396,34 @@ class ApiRequest extends lit_element_s {
           opacity: 1;
         }
 
+        .splitted-body-request--wrapper {
+          display: flex;
+          justify-content: space-between;
+        }
+        .splitted-body-request--example-wrapper,
+        .splitted-body-request--schema-wrapper {
+          display: flex;
+          flex-direction: column;
+          width: calc(50% - 1em);
+        }
+        .splitted-body-request--example-wrapper .example-panel {
+          padding: 0;
+          border-top: 0;
+        }
+        .splitted-body-request--example-wrapper .example {
+          margin: 0;
+        }
+        .splitted-body-request--example-wrapper .request-body-param-user-input {
+          display: block;
+          padding: 1em;
+        }
+        .splitted-body-request--schema-wrapper schema-tree {
+          padding: .5em 1em;
+          border: 1px solid rgb(212, 213, 214);
+          background-color: white;
+          flex: 1;
+        }
+
         @media only screen and (min-width: 768px) {
           .textarea {
             padding:8px;
@@ -30439,7 +30481,7 @@ class ApiRequest extends lit_element_s {
     return $`
     ${exampleList.length > 0 ? $`<span style="font-weight:bold">Example: </span>
         ${exampleList.map((v, i) => {
-      var _v$value, _v$value2;
+      var _v$value, _v$value2, _v$value3;
 
       return $`
           ${i === 0 ? '' : '┃'}
@@ -30458,7 +30500,9 @@ class ApiRequest extends lit_element_s {
           }
         }
       }}"
-          >${v.value && Array.isArray(v.value) ? (_v$value2 = v.value) === null || _v$value2 === void 0 ? void 0 : _v$value2.join(', ') : v.value || ''}</a>
+          >
+          ${this.useSummaryToListExamples === 'true' ? v.description || v.summary || (v.value && Array.isArray(v.value) ? (_v$value2 = v.value) === null || _v$value2 === void 0 ? void 0 : _v$value2.join(', ') : v.value || '') : v.value && Array.isArray(v.value) ? (_v$value3 = v.value) === null || _v$value3 === void 0 ? void 0 : _v$value3.join(', ') : v.value || ''}
+          </a>
           ${paramType === 'array' ? '] ' : ''}
         `;
     })}
@@ -30845,18 +30889,38 @@ class ApiRequest extends lit_element_s {
         </div>
         ${this.request_body.description ? $`<div class="m-markdown" style="margin-bottom:12px">${unsafe_html_o(marked(this.request_body.description))}</div>` : ''}
         
-        ${this.selectedRequestBodyType.includes('json') || this.selectedRequestBodyType.includes('xml') || this.selectedRequestBodyType.includes('text') || this.selectedRequestBodyType.includes('jose') ? $`
-            <div class="tab-panel col" style="border-width:0 0 1px 0;">
-              <div class="tab-buttons row" @click="${e => {
-      if (e.target.tagName.toLowerCase() === 'button') {
-        this.activeSchemaTab = e.target.dataset.tab;
+        ${this.selectedRequestBodyType.includes('json') || this.selectedRequestBodyType.includes('xml') || this.selectedRequestBodyType.includes('text') || this.selectedRequestBodyType.includes('jose') ? (() => {
+      switch (this.requestBodyRenderStyle) {
+        case 'splitted':
+          return $`
+                <div class="splitted-body-request--wrapper">
+                  <div class="splitted-body-request--schema-wrapper">
+                    <span>Expected schema</span>
+                    ${reqBodySchemaHtml}
+                  </div>
+                  <div class="splitted-body-request--example-wrapper">
+                    <span>Body input</span>
+                    ${reqBodyExampleHtml}
+                  </div>
+                </div>
+              `;
+
+        default:
+          return $`
+                <div class="tab-panel col" style="border-width:0 0 1px 0;">
+                  <div class="tab-buttons row" @click="${e => {
+            if (e.target.tagName.toLowerCase() === 'button') {
+              this.activeSchemaTab = e.target.dataset.tab;
+            }
+          }}">
+                    <button class="tab-btn ${this.activeSchemaTab === 'example' ? 'active' : ''}" data-tab = 'example'>EXAMPLE</button>
+                    <button class="tab-btn ${this.activeSchemaTab !== 'example' ? 'active' : ''}" data-tab = 'schema'>SCHEMA</button>
+                  </div>
+                  ${this.activeSchemaTab === 'example' ? $`<div class="tab-content col"> ${reqBodyExampleHtml}</div>` : $`<div class="tab-content col"> ${reqBodySchemaHtml}</div>`}
+                </div>
+              `;
       }
-    }}">
-                <button class="tab-btn ${this.activeSchemaTab === 'example' ? 'active' : ''}" data-tab = 'example'>EXAMPLE</button>
-                <button class="tab-btn ${this.activeSchemaTab !== 'example' ? 'active' : ''}" data-tab = 'schema'>SCHEMA</button>
-              </div>
-              ${this.activeSchemaTab === 'example' ? $`<div class="tab-content col"> ${reqBodyExampleHtml}</div>` : $`<div class="tab-content col"> ${reqBodySchemaHtml}</div>`}
-            </div>` : $`  
+    })() : $`  
             ${reqBodyFileInputHtml}
             ${reqBodyFormHtml}`}
       </div>  
@@ -31100,7 +31164,7 @@ class ApiRequest extends lit_element_s {
               <button class="toolbar-btn" style="position:absolute; top:12px; right:8px" @click='${e => {
       copyToClipboard(this.responseText, e);
     }}' part="btn btn-fill"> Copy </button>
-              <pre style="white-space:pre; min-height:50px; height:400px; resize:vertical; overflow:auto">${responseFormat ? $`<code>${unsafe_html_o(prism_default().highlight(this.responseText, (prism_default()).languages[responseFormat], responseFormat))}</code>` : `${this.responseText}`}</pre>
+              <pre style="white-space:pre; min-height:50px; height:max-content; resize:vertical; overflow:auto">${responseFormat ? $`<code>${unsafe_html_o(prism_default().highlight(this.responseText, (prism_default()).languages[responseFormat], responseFormat))}</code>` : `${this.responseText}`}</pre>
             </div>`}
         <div class="tab-content col m-markdown" style="flex:1; display:${this.activeResponseTab === 'headers' ? 'flex' : 'none'};" >
           <button  class="toolbar-btn" style = "position:absolute; top:12px; right:8px" @click='${e => {
@@ -32459,10 +32523,12 @@ function expandedEndpointBodyTemplate(path, tagName = '') {
         .servers = "${path.servers}"
         server-url = "${((_path$servers = path.servers) === null || _path$servers === void 0 ? void 0 : (_path$servers$ = _path$servers[0]) === null || _path$servers$ === void 0 ? void 0 : _path$servers$.url) || this.selectedServer.computedUrl}"
         fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
+        use-summary-to-list-example = "${this.useSummaryToListExamples}"
         allow-try = "${this.allowTry}"
         accept = "${accept}"
         render-style="${this.renderStyle}" 
         schema-style = "${this.schemaStyle}"
+        request-body-render-style="${this.requestBodyRenderStyle}"
         active-schema-tab = "${this.defaultSchemaTab}"
         schema-expand-level = "${this.schemaExpandLevel}"
         schema-description-expanded = "${this.schemaDescriptionExpanded}"
@@ -33230,10 +33296,12 @@ function endpointBodyTemplate(path) {
           server-url = "${path.servers && path.servers.length > 0 ? path.servers[0].url : this.selectedServer.computedUrl}" 
           active-schema-tab = "${this.defaultSchemaTab}"
           fill-request-fields-with-example = "${this.fillRequestFieldsWithExample}"
+          use-summary-to-list-example = "${this.useSummaryToListExamples}"
           allow-try = "${this.allowTry}"
           accept = "${accept}"
           render-style="${this.renderStyle}" 
           schema-style = "${this.schemaStyle}" 
+          request-body-render-style="${this.requestBodyRenderStyle}"
           schema-expand-level = "${this.schemaExpandLevel}"
           schema-description-expanded = "${this.schemaDescriptionExpanded}"
           allow-schema-description-expand-toggle = "${this.allowSchemaDescriptionExpandToggle}"
@@ -34185,6 +34253,10 @@ class RapiDoc extends lit_element_s {
         type: String,
         attribute: 'fill-request-fields-with-example'
       },
+      useSummaryToListExamples: {
+        type: String,
+        attribute: 'use-summary-to-list-example'
+      },
       persistAuth: {
         type: String,
         attribute: 'persist-auth'
@@ -34193,6 +34265,11 @@ class RapiDoc extends lit_element_s {
         type: String,
         attribute: 'on-nav-tag-click'
       },
+      requestBodyRenderStyle: {
+        type: String,
+        attribute: 'request-body-render-style'
+      },
+      // 'splitted' | 'default'
       // Schema Styles
       schemaStyle: {
         type: String,
@@ -34755,6 +34832,10 @@ class RapiDoc extends lit_element_s {
 
     if (!this.fillRequestFieldsWithExample || !'true, false,'.includes(`${this.fillRequestFieldsWithExample},`)) {
       this.fillRequestFieldsWithExample = 'true';
+    }
+
+    if (!this.useSummaryToListExamples || !'true, false,'.includes(`${this.useSummaryToListExamples},`)) {
+      this.useSummaryToListExamples = 'false';
     }
 
     if (!this.persistAuth || !'true, false,'.includes(`${this.persistAuth},`)) {
@@ -35509,6 +35590,10 @@ class RapiDocMini extends lit_element_s {
         type: String,
         attribute: 'fill-request-fields-with-example'
       },
+      useSummaryToListExamples: {
+        type: String,
+        attribute: 'use-summary-to-list-example'
+      },
       persistAuth: {
         type: String,
         attribute: 'persist-auth'
@@ -35692,6 +35777,10 @@ class RapiDocMini extends lit_element_s {
 
     if (!this.fillRequestFieldsWithExample || !'true, false,'.includes(`${this.fillRequestFieldsWithExample},`)) {
       this.fillRequestFieldsWithExample = 'true';
+    }
+
+    if (!this.useSummaryToListExamples || !'true, false,'.includes(`${this.useSummaryToListExamples},`)) {
+      this.useSummaryToListExamples = 'false';
     }
 
     if (!this.persistAuth || !'true, false,'.includes(`${this.persistAuth},`)) {
@@ -42179,7 +42268,7 @@ Prism.languages.js = Prism.languages.javascript;
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("17d08cc6fa39b23c87c7")
+/******/ 		__webpack_require__.h = () => ("8fc664197c9fbdc8620f")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
